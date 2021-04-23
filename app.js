@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require("express");
 const ejs = require("ejs");
-const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const session = require("express-session");
 const passport = require("passport");
@@ -9,11 +8,11 @@ const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const findOrCreate = require("mongoose-findorcreate");
 
-
+////////////////////////////////////////////////////////////////////////
 const app = express();
 
 app.use(express.static("public"));
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(express.urlencoded({extended: true}));
 app.set("view engine","ejs");
 app.use(session({
   secret: process.env.SECRET,
@@ -23,6 +22,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+////////////////////////////////////////////////////////////////////////
 passport.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
@@ -35,7 +35,7 @@ passport.use(new GoogleStrategy({
   }
 ));
 
-
+////////////////////////////////////////////////////////////////////////
 mongoose.connect("mongodb://localhost:27017/userDB", {useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true })
     .then(console.log("mongodb connected successfully"));
 
@@ -61,25 +61,30 @@ passport.deserializeUser(function(id, done) {
   });
 });
 
+////////////////////////////////////////////////////////////////////////
 app.get("/",function(req,res){
   res.render("home");
 });
 
+////////////////////////////////////////////////////////////////////////
 app.get("/auth/google", passport.authenticate('google', {
     scope: ["profile"]
 }));
 
+////////////////////////////////////////////////////////////////////////
 app.get('/auth/google/secrets',
   passport.authenticate('google', { failureRedirect: '/login' }),
   function(req, res) {
     res.redirect('/secrets');
   });
+////////////////////////////////////////////////////////////////////////
+app.route("/login")
 
-app.get("/login",function(req,res){
+.get(function(req,res){
   res.render("login");
-});
+})
 
-app.post("/login",function(req,res){
+.post(function(req,res){
   const user = new User({
     username:req.body.username,
     password:req.body.password
@@ -96,11 +101,14 @@ app.post("/login",function(req,res){
   })
 });
 
-app.get("/register",function(req,res){
-  res.render("register");
-});
+////////////////////////////////////////////////////////////////////////
+app.route("/register")
 
-app.post("/register",function(req,res){
+.get(function(req,res){
+  res.render("register");
+})
+
+.post(function(req,res){
   User.register({username: req.body.username}, req.body.password, function(err,user){
     if(!err){
       passport.authenticate("local")(req,res,function(){
@@ -113,7 +121,9 @@ app.post("/register",function(req,res){
   })
 });
 
-app.get("/secrets",function(req,res){
+////////////////////////////////////////////////////////////////////////
+app.route("/secrets")
+.get(function(req,res){
   User.find({"secret": {$ne: null}}, function(err, foundUsers){
     if(!err){
       if(foundUsers){
@@ -125,7 +135,9 @@ app.get("/secrets",function(req,res){
   });
 });
 
-app.get("/yourSecrets",function(req,res){
+////////////////////////////////////////////////////////////////////////
+app.route("/yourSecrets")
+.get(function(req,res){
   const id = req.user._id;
   User.find({"_id": id} , function(err, foundUsers){
     if(!err){
@@ -138,20 +150,24 @@ app.get("/yourSecrets",function(req,res){
   });
 });
 
-app.get("/logout",function(req,res){
+////////////////////////////////////////////////////////////////////////
+app.route("/logout")
+.get(function(req,res){
   req.logout();
   res.redirect("/");
 });
 
-app.get("/submit",function(req,res){
+////////////////////////////////////////////////////////////////////////
+app.route("/submit")
+.get(function(req,res){
   if(req.isAuthenticated()){
     res.render("submit");
   } else {
     res.redirect("/login");
   }
-});
+})
 
-app.post("/submit",function(req,res){
+.post(function(req,res){
   const submittedSecret = req.body.secret;
   User.findById(req.user.id, function(err,foundUser){
     if(!err){
@@ -168,11 +184,7 @@ app.post("/submit",function(req,res){
   });
 });
 
-
-
-
-
-
+////////////////////////////////////////////////////////////////////////
 app.listen(3000,function(req,res){
   console.log("Server started at port 3000");
 })
