@@ -126,7 +126,8 @@ app.get("/secrets",function(req,res){
 });
 
 app.get("/yourSecrets",function(req,res){
-  User.findById(req.body._id, function(err, foundUsers){
+  const id = req.user._id;
+  User.find({"_id": id} , function(err, foundUsers){
     if(!err){
       if(foundUsers){
         res.render("yourSecrets", {usersWithSecrets: foundUsers});
