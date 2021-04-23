@@ -119,8 +119,22 @@ app.get("/secrets",function(req,res){
       if(foundUsers){
         res.render("secrets",{usersWithSecrets: foundUsers})
       }
+    } else {
+      console.log(err);
     }
-  })
+  });
+});
+
+app.get("/yourSecrets",function(req,res){
+  User.findById(req.body._id, function(err, foundUsers){
+    if(!err){
+      if(foundUsers){
+        res.render("yourSecrets", {usersWithSecrets: foundUsers});
+      }
+    } else {
+      console.log(err);
+    }
+  });
 });
 
 app.get("/logout",function(req,res){
